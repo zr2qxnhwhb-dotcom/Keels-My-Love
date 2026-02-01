@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>💌 For You</title>
+  <style>
+    :root{
+      --bg1:#ffdde1;
+      --bg2:#ee9ca7;
+      --card: rgba(255,255,255,.78);
+      --text:#141414;
+      --shadow: 0 18px 55px rgba(0,0,0,.18);
+      --radius: 22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+      color:var(--text);
+      overflow:hidden;
+      padding:18px;
+    }
+    .card{
+      width:min(680px, 95vw);
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.6);
+      border-radius:var(--radius);
+      padding:28px 22px 22px;
+      text-align:center;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      position:relative;
+    }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(26px, 5vw, 42px);
+      letter-spacing:-.02em;
+    }
+    p{
+      margin:0;
+      font-size: clamp(16px, 2.4vw, 18px);
+      line-height:1.45;
+      opacity:.92;
+    }
+    .question{
+      margin-top:18px;
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight:900;
+    }
+    .buttons{
+      margin-top:18px;
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      padding:12px 18px;
+      border-radius:16px;
+      font-weight:900;
+      cursor:pointer;
+      font-size:16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.14);
+      transition: transform .12s ease, opacity .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    .yes{ background:#111; color:#fff; }
+    .no{
+      background:#fff;
+      color:#111;
+      border:1px solid rgba(0,0,0,.08);
+    }
+    .hint{
+      margin-top:12px;
+      font-size:13px;
+      opacity:.7;
+    }
+
+    /* Incorrect message */
+    .toast{
+      margin:14px auto 0;
+      width: fit-content;
+      max-width: 100%;
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.12);
+      display:none;
+    }
+
+    /* Modal */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:50;
+    }
+    .modal{
+      width:min(720px, 95vw);
+      background:rgba(255,255,255,.92);
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow: 0 25px 80px rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.6);
+    }
+    .modalTop{
+      padding:18px 18px 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .modalTop h2{
+      margin:0;
+      font-size:20px;
+      letter-spacing:-.01em;
+    }
+    .close{
+      background:#111;
+      color:#fff;
+      padding:10px 12px;
+      border-radius:14px;
+      font-size:14px;
+      box-shadow:none;
+    }
+
+    /* Photo + banner */
+    .photoWrap{
+      padding:0 18px 18px;
+      position:relative;
+    }
+    .photoBanner{
+      position:absolute;
+      top:10px;
+      left:28px;
+      right:28px;
+      z-index:2;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      background: rgba(255,255,255,.88);
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      backdrop-filter: blur(6px);
+      text-align:center;
+    }
+    img{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:18px;
+      border:1px solid rgba(0,0,0,.08);
+    }
+
+    /* tiny shake on "No" click */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    .shake { animation: shake .28s ease; }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="card">
+    <h1>Hey Keels 💘</h1>
+    <p>I’ve got one question for you…</p>
+
+    <div class="question">
+      Will you be my Valentine’s Princess and make me the happiest person alive? 💐
+    </div>
+
+    <div class="buttons">
+      <button class="yes" id="yesBtn">Yes 💖</button>
+      <button class="no" id="noBtn">No 🙃</button>
+    </div>
+
+    <div class="toast" id="toast">Incorrect answer. Try again 😌</div>
+    <div class="hint">Choose wisely…</div>
+  </div>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalTop">
+        <h2>YESSS 💘</h2>
+        <button class="close" id="closeBtn">Close</button>
+      </div>
+
+      <div class="photoWrap">
+        <div class="photoBanner">Thank you so much baby, I love you ❤️</div>
+        <img src="photo.jpg" alt="Us" />
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    const toast = document.getElementById('toast');
+    const card = document.getElementById('card');
+
+    function fireworks(){
+      const duration = 1700;
+      const end = Date.now() + duration;
+
+      (function frame(){
+        confetti({
+          particleCount: 8,
+          startVelocity: 45,
+          spread: 360,
+          ticks: 90,
+          origin: { x: Math.random(), y: Math.random() * 0.5 }
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+
+      confetti({ particleCount: 140, spread: 80, startVelocity: 55, origin: { x: 0.5, y: 0.7 } });
+      setTimeout(() => confetti({ particleCount: 120, spread: 90, startVelocity: 50, origin: { x: 0.2, y: 0.65 } }), 180);
+      setTimeout(() => confetti({ particleCount: 120, spread: 90, startVelocity: 50, origin: { x: 0.8, y: 0.65 } }), 320);
+    }
+
+    function openModal(){
+      overlay.style.display = 'flex';
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal(){
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function showIncorrect(){
+      toast.style.display = 'block';
+      card.classList.remove('shake');
+      void card.offsetWidth; // restart animation
+      card.classList.add('shake');
+      clearTimeout(showIncorrect._t);
+      showIncorrect._t = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 1600);
+    }
+
+    yesBtn.addEventListener('click', () => {
+      toast.style.display = 'none';
+      fireworks();
+      openModal();
+      yesBtn.textContent = "YES 💘";
+      noBtn.style.opacity = 0.75;
+    });
+
+    noBtn.addEventListener('click', () => {
+      showIncorrect();
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+  </script>
+</body>
+</html>
